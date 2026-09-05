@@ -6,4 +6,6 @@ set(CMAKE_CXX_STANDARD 14)
 add_executable(Code
         .idea/.gitignore
         .idea/workspace.xml
-        main.c)
+        main.c
+        shared_euler.c
+        shared_euler.h)

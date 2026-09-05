@@ -1,0 +1,11 @@
+# Build folders
+cmake-build-debug/
+cmake-build-release/
+build/
+
+# IDE/editor files
+.idea/
+.vscode/
+
+# OS-specific junk
+.DS_Store
