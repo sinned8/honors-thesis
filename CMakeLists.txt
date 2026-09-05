@@ -8,4 +8,8 @@ add_executable(Code
         .idea/workspace.xml
         main.c
         shared_euler.c
-        shared_euler.h)
+        shared_euler.h
+        eulerian_1d.h
+        eulerian_1d.c
+        array_handling.c
+        array_handling.h)
