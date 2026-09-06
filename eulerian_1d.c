@@ -5,12 +5,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-
+#include "io.h"
 
 
 void init_euler_grid_1d(ConservedStateVector *U_CELL,
-    ConservedStateVector UL , ConservedStateVector UR ,
-    int gridSize)
+                        ConservedStateVector UL , ConservedStateVector UR ,
+                        int gridSize)
 {
     //assuming 0 <= x <= 1
     double dx = 1.0 / gridSize;
@@ -56,7 +56,7 @@ void update_euler_grid(ConservedStateVector *U_CELL, PhysicalFluxVector *F_HAT_C
     ConservedStateVector *U_CELL_NEW = malloc( (gridSize) * sizeof(ConservedStateVector));
     U_CELL_NEW = copy_1d_array(U_CELL,U_CELL_NEW,gridSize);
 
-
+    // write_state_to_csv(U_CELL,gridSize,gamma,t,dx);
     while (t < t_final)
     {
          double dt = compute_dt_CFL(U_CELL,dx,gridSize,gamma);
@@ -64,7 +64,7 @@ void update_euler_grid(ConservedStateVector *U_CELL, PhysicalFluxVector *F_HAT_C
         {
             dt = t_final -t;
         }
-        printf("\ndt: %f\n",dt);
+
         U_CELL_OLD = copy_1d_array(U_CELL_NEW,U_CELL_OLD,gridSize);
 
         //temp boundary treatment
@@ -78,7 +78,10 @@ void update_euler_grid(ConservedStateVector *U_CELL, PhysicalFluxVector *F_HAT_C
         compute_euler_fluxes(U_CELL,F_HAT_CELL,gridSize,gamma);
         t += dt;
     }
-
+    write_state_to_csv(U_CELL,gridSize,gamma,t,dx);
+    const char *output = "outputs/output.csv";
+    printf("Writing to file: %s\n", output);
+    plot1d_csv(output);
 
     free(U_CELL_OLD);
     free(U_CELL_NEW);

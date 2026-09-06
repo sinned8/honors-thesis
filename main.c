@@ -59,24 +59,24 @@ int main()
 
     update_euler_grid(U_CELL,F_HAT_CELL,gridSize,gamma,0.2);
 
-    for (int i = 48; i <=51; ++i)
-    {
-
-        printf("\nU_CELL rho: %f"
-               "\nU_CELL momentum : %f"
-               "\nU_CELL energy: %f \n" , U_CELL[i].rho,U_CELL[i].momentum,U_CELL[i].energy);
-
-        printf("\nF_HAT_CELL mass flux: %f"
-               "\nF_HAT_CELL momentum flux : %f"
-               "\nF_HAT_CELL energy flux: %f \n" , F_HAT_CELL[i].mass_flux,F_HAT_CELL[i].momentum_flux,F_HAT_CELL[i].energy_flux);
-    }
-
-    PrimitiveStateVector W3 =
-    conserved_to_prim(U_CELL[50], gamma);
-
-    printf("rho = %f\n", W3.rho);
-    printf("velocity = %f\n", W3.velocity);
-    printf("pressure = %f\n", W3.pressure);
+    // for (int i = 48; i <=51; ++i)
+    // {
+    //
+    //     printf("\nU_CELL rho: %f"
+    //            "\nU_CELL momentum : %f"
+    //            "\nU_CELL energy: %f \n" , U_CELL[i].rho,U_CELL[i].momentum,U_CELL[i].energy);
+    //
+    //     printf("\nF_HAT_CELL mass flux: %f"
+    //            "\nF_HAT_CELL momentum flux : %f"
+    //            "\nF_HAT_CELL energy flux: %f \n" , F_HAT_CELL[i].mass_flux,F_HAT_CELL[i].momentum_flux,F_HAT_CELL[i].energy_flux);
+    // }
+    //
+    // PrimitiveStateVector W3 =
+    // conserved_to_prim(U_CELL[50], gamma);
+    //
+    // printf("rho = %f\n", W3.rho);
+    // printf("velocity = %f\n", W3.velocity);
+    // printf("pressure = %f\n", W3.pressure);
 
     free(U_CELL);
     free(F_HAT_CELL);
