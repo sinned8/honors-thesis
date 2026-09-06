@@ -7,5 +7,9 @@ build/
 .idea/
 .vscode/
 
+# Generated outputs folder
+outputs/*
+
+
 # OS-specific junk
 .DS_Store

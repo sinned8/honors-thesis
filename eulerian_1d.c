@@ -44,23 +44,30 @@ void compute_euler_fluxes(ConservedStateVector *U_CELL, PhysicalFluxVector *F_HA
 }
 
 void update_euler_grid(ConservedStateVector *U_CELL, PhysicalFluxVector *F_HAT_CELL,
-    int gridSize, double gamma)
+    int gridSize, double gamma, double t_final)
 {
 
     //assuming 0 <= x <= 1
     const double dx = 1.0 / gridSize;
+
+    double t = 0;
 
     ConservedStateVector *U_CELL_OLD = malloc( (gridSize) * sizeof(ConservedStateVector));
     ConservedStateVector *U_CELL_NEW = malloc( (gridSize) * sizeof(ConservedStateVector));
     U_CELL_NEW = copy_1d_array(U_CELL,U_CELL_NEW,gridSize);
 
 
-    for (int n = 0; n < 1; ++n)
+    while (t < t_final)
     {
-        const double dt = compute_dt_CFL(U_CELL,dx,gridSize,gamma);
+         double dt = compute_dt_CFL(U_CELL,dx,gridSize,gamma);
+        if (t + dt > t_final)
+        {
+            dt = t_final -t;
+        }
         printf("\ndt: %f\n",dt);
         U_CELL_OLD = copy_1d_array(U_CELL_NEW,U_CELL_OLD,gridSize);
 
+        //temp boundary treatment
         for (int i = 1; i <= gridSize - 2; ++i)
         {
             U_CELL_NEW[i].rho = U_CELL_OLD[i].rho - (dt/dx *(F_HAT_CELL[i].mass_flux - F_HAT_CELL[i-1].mass_flux));
@@ -69,6 +76,7 @@ void update_euler_grid(ConservedStateVector *U_CELL, PhysicalFluxVector *F_HAT_C
         }
         U_CELL = copy_1d_array(U_CELL_NEW,U_CELL,gridSize);
         compute_euler_fluxes(U_CELL,F_HAT_CELL,gridSize,gamma);
+        t += dt;
     }
 
 

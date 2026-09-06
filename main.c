@@ -57,7 +57,7 @@ int main()
     //            "\nF_HAT_CELL energy flux: %f \n" , F_HAT_CELL[i].mass_flux,F_HAT_CELL[i].momentum_flux,F_HAT_CELL[i].energy_flux);
     // }
 
-    update_euler_grid(U_CELL,F_HAT_CELL,gridSize,gamma);
+    update_euler_grid(U_CELL,F_HAT_CELL,gridSize,gamma,0.2);
 
     for (int i = 48; i <=51; ++i)
     {

@@ -12,4 +12,6 @@ add_executable(Code
         eulerian_1d.h
         eulerian_1d.c
         array_handling.c
-        array_handling.h)
+        array_handling.h
+        io.c
+        io.h)
