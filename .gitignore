@@ -13,3 +13,13 @@ outputs/*
 
 # OS-specific junk
 .DS_Store
+
+# Python virtual environment
+.venv/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Third-party repositories
+external/riemann_book/

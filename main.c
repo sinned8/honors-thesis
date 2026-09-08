@@ -7,7 +7,7 @@
 int main()
 {
     double gamma = 1.4;
-    int gridSize = 100;
+    int gridSize = 400;
 
     PrimitiveStateVector W1 = {1.0, 0, 1.0};
     PrimitiveStateVector W2 = {0.125, 0, 0.1};

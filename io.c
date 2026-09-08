@@ -35,7 +35,9 @@ void plot1d_csv(const char * filename)
 
     // command to run plot_1d.py and transfer over necessary variables
     snprintf(command, sizeof(command),
-             "python \"python scripts\\plot_1d.py\" \"%s\" ",
+             ".\\.venv\\Scripts\\python.exe "
+             "\"python scripts\\plot_1d.py\" "
+             "\"%s\"",
              filename);
 
     printf("Running command:\n%s\n", command);
