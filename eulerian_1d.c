@@ -8,17 +8,17 @@
 #include "io.h"
 
 
-void init_euler_grid_1d(ConservedStateVector *U_CELL,
+void init_sod_grid_1d(ConservedStateVector *U_CELL,
                         ConservedStateVector UL , ConservedStateVector UR ,
-                        int gridSize)
+                        int gridSize,double x_min,double x_max)
 {
-    //assuming 0 <= x <= 1
-    double dx = 1.0 / gridSize;
+    //generalized dx now based on range of x
+    const double dx = (x_max - x_min) / gridSize;
 
     for (int i = 0; i < gridSize; ++i)
     {
-        //center for cell xi
-        double xi = (i + 0.5) * dx;
+        //center for cell xi - now based on range of x
+        const double xi = x_min + (i + 0.5 ) * dx;
 
         if (xi < 0.5)
         {
@@ -30,6 +30,32 @@ void init_euler_grid_1d(ConservedStateVector *U_CELL,
         }
     }
 
+}
+
+
+void init_shu_osher_1d(ConservedStateVector *U_CELL,
+    ConservedStateVector UL , ConservedStateVector UR,int gridSize,double x_min,double x_max)
+{
+    //generalized dx now based on range of x
+    const double dx = (x_max - x_min) / gridSize;
+
+    for (int i = 0; i < gridSize; ++i)
+    {
+        //center for cell xi - now based on range of x
+        const double xi = x_min + (i + 0.5 ) * dx;
+
+        if (xi < -4)
+        {
+            U_CELL[i] = UL;
+        }
+        else
+        {
+
+            UR.rho = 1+0.2*sin(5 * xi);
+            U_CELL[i] = UR;
+
+        }
+    }
 }
 
 void compute_euler_fluxes(ConservedStateVector *U_CELL, PhysicalFluxVector *F_HAT_CELL,
@@ -44,11 +70,11 @@ void compute_euler_fluxes(ConservedStateVector *U_CELL, PhysicalFluxVector *F_HA
 }
 
 void update_euler_grid(ConservedStateVector *U_CELL, PhysicalFluxVector *F_HAT_CELL,
-    int gridSize, double gamma, double t_final)
+    int gridSize, double gamma, double t_final, double x_min,double x_max)
 {
 
-    //assuming 0 <= x <= 1
-    const double dx = 1.0 / gridSize;
+
+    const double dx = (x_max - x_min) / gridSize;
 
     double t = 0;
 
@@ -59,7 +85,7 @@ void update_euler_grid(ConservedStateVector *U_CELL, PhysicalFluxVector *F_HAT_C
     // write_state_to_csv(U_CELL,gridSize,gamma,t,dx);
     while (t < t_final)
     {
-         double dt = compute_dt_CFL(U_CELL,dx,gridSize,gamma);
+        double dt = compute_dt_CFL(U_CELL,dx,gridSize,gamma);
         if (t + dt > t_final)
         {
             dt = t_final -t;
@@ -73,15 +99,18 @@ void update_euler_grid(ConservedStateVector *U_CELL, PhysicalFluxVector *F_HAT_C
             U_CELL_NEW[i].rho = U_CELL_OLD[i].rho - (dt/dx *(F_HAT_CELL[i].mass_flux - F_HAT_CELL[i-1].mass_flux));
             U_CELL_NEW[i].momentum = U_CELL_OLD[i].momentum - (dt/dx * (F_HAT_CELL[i].momentum_flux - F_HAT_CELL[i-1].momentum_flux));
             U_CELL_NEW[i].energy = U_CELL_OLD[i].energy - (dt/dx * (F_HAT_CELL[i].energy_flux - F_HAT_CELL[i-1].energy_flux));
+
         }
         U_CELL = copy_1d_array(U_CELL_NEW,U_CELL,gridSize);
         compute_euler_fluxes(U_CELL,F_HAT_CELL,gridSize,gamma);
         t += dt;
+
     }
-    write_state_to_csv(U_CELL,gridSize,gamma,t,dx);
+    write_state_to_csv(U_CELL,gridSize,gamma,t,dx,x_min);
     const char *output = "outputs/output.csv";
     printf("Writing to file: %s\n", output);
-    plot1d_csv(output);
+    plot1d_csv_shu(output,gridSize,t_final);
+
 
     free(U_CELL_OLD);
     free(U_CELL_NEW);
@@ -102,7 +131,7 @@ double compute_dt_CFL(ConservedStateVector *U_CELL,double dx,int gridSize, doubl
         }
     }
 
-
+    //C_cfl = 0.5
     double dt = 0.5 * (dx / a_max);
 
     return dt;

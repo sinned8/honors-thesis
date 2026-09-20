@@ -2,18 +2,21 @@
 #include "eulerian_1d.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 
 
 int main()
 {
     double gamma = 1.4;
-    int gridSize = 400;
+    int gridSize = 800;
+    double x_min = -5;
+    double x_max = 5;
 
-    PrimitiveStateVector W1 = {1.0, 0, 1.0};
-    PrimitiveStateVector W2 = {0.125, 0, 0.1};
-
-    ConservedStateVector U = prim_to_conserved(W1,gamma);
-    ConservedStateVector U2 = prim_to_conserved(W2,gamma);
+    // PrimitiveStateVector W1 = {1.0, 0, 1.0};
+    // PrimitiveStateVector W2 = {0.125, 0, 0.1};
+    //
+    // ConservedStateVector U = prim_to_conserved(W1,gamma);
+    // ConservedStateVector U2 = prim_to_conserved(W2,gamma);
 
     // PrimitiveStateVector W2 = conserved_to_prim(U,gamma);
     // printf("rho: %f "
@@ -42,8 +45,8 @@ int main()
     ConservedStateVector *U_CELL = malloc(gridSize * sizeof(ConservedStateVector));
     PhysicalFluxVector *F_HAT_CELL = malloc( (gridSize - 1) * sizeof(PhysicalFluxVector));
 
-    init_euler_grid_1d(U_CELL,U,U2,gridSize);
-    compute_euler_fluxes(U_CELL,F_HAT_CELL,gridSize,gamma);
+    // // init_sod_grid_1d(U_CELL,U,U2,gridSize,x_min,x_max);
+    // compute_euler_fluxes(U_CELL,F_HAT_CELL,gridSize,gamma);
 
     // for (int i = 48; i <=51; ++i)
     // {
@@ -57,7 +60,7 @@ int main()
     //            "\nF_HAT_CELL energy flux: %f \n" , F_HAT_CELL[i].mass_flux,F_HAT_CELL[i].momentum_flux,F_HAT_CELL[i].energy_flux);
     // }
 
-    update_euler_grid(U_CELL,F_HAT_CELL,gridSize,gamma,0.2);
+    // update_euler_grid(U_CELL,F_HAT_CELL,gridSize,gamma,0.2,x_min,x_max);
 
     // for (int i = 48; i <=51; ++i)
     // {
@@ -77,6 +80,32 @@ int main()
     // printf("rho = %f\n", W3.rho);
     // printf("velocity = %f\n", W3.velocity);
     // printf("pressure = %f\n", W3.pressure);
+
+
+
+    //SHU OSHER
+    PrimitiveStateVector W1 = {3.857143, 2.629369, 10.33333};
+    //rho is converted to init_shu_osher_1d
+    PrimitiveStateVector W2 = {1, 0, 1};
+
+    ConservedStateVector U = prim_to_conserved(W1,gamma);
+    ConservedStateVector U2 = prim_to_conserved(W2,gamma);
+
+
+    init_shu_osher_1d(U_CELL,U,U2,gridSize,x_min,x_max);
+    compute_euler_fluxes(U_CELL,F_HAT_CELL,gridSize,gamma);
+    update_euler_grid(U_CELL,F_HAT_CELL,gridSize,gamma,1.8,x_min,x_max);
+    // for (int i = 1; i <= gridSize - 2; ++i)
+    // {
+    //
+    //     printf("\nU_CELL rho: %f"
+    //            "\nU_CELL momentum : %f"
+    //            "\nU_CELL energy: %f \n" , U_CELL[i].rho,U_CELL[i].momentum,U_CELL[i].energy);
+    //
+    //     printf("\nF_HAT_CELL mass flux: %f"
+    //            "\nF_HAT_CELL momentum flux : %f"
+    //            "\nF_HAT_CELL energy flux: %f \n" , F_HAT_CELL[i].mass_flux,F_HAT_CELL[i].momentum_flux,F_HAT_CELL[i].energy_flux);
+    // }
 
     free(U_CELL);
     free(F_HAT_CELL);
