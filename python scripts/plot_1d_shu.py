@@ -43,7 +43,7 @@ axes[2].grid(alpha=0.25)
 
 axes[2].set_xlim(-5, 5)
 
-fig.suptitle(f"Shu–Osher Problem at {N}")
+fig.suptitle(f"Shu–Osher Problem — N = {N}, t = {T_FINAL}")
 
 plt.tight_layout()
 plt.show()
@@ -63,7 +63,7 @@ plt.plot(
 
 plt.xlabel("x")
 plt.ylabel("Density")
-plt.title(f"Shu–Osher Density at t = {T_FINAL}")
+plt.title(f"Shu–Osher Density — N = {N}, t = {T_FINAL}")
 plt.xlim(-5, 5)
 
 plt.grid(alpha=0.25)

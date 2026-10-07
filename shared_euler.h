@@ -33,5 +33,4 @@ double speed_sound(ConservedStateVector u, double gamma);
 PhysicalFluxVector rusanov_flux(ConservedStateVector UL, ConservedStateVector UR, double gamma);
 
 
-
 #endif

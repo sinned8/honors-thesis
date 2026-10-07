@@ -16,5 +16,11 @@ void update_euler_grid(ConservedStateVector *U_CELL, PhysicalFluxVector *F_HAT_C
     int gridSize,double gamma,double t_final, double x_min,double x_max);
 
 double compute_dt_CFL(ConservedStateVector *U_CELL,double dx, int gridSize,double gamma);
+
+void compute_rhs(ConservedStateVector *U_CELL,ConservedStateVector *RHS,
+    PhysicalFluxVector *F_HAT_CELL,int gridSize,double gamma,double dx);
+
+
+
 #endif
 
