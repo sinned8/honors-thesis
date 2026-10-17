@@ -24,7 +24,8 @@ void write_state_to_csv(ConservedStateVector *U_CELL, int gridSize, double gamma
     for (int i = 0; i < gridSize; i++)
     {
         const double xi = x_min + (i + 0.5 ) * dx;
-        fprintf(fp,"%f,%f,%f,%f\n", xi,U_CELL[i].rho,W_CELL[i].velocity,W_CELL[i].pressure);
+        //needed more space to avoid rounding errors when calculating convergence norms
+        fprintf(fp,"%.15g,%.15g,%.15g,%.15g\n",xi,U_CELL[i].rho,W_CELL[i].velocity,W_CELL[i].pressure);
     }
 
 

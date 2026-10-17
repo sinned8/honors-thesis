@@ -1,6 +1,6 @@
 #ifndef EULERIAN_1D_H
 #define EULERIAN_1D_H
-
+#define NGHOST 2
 
 void init_sod_grid_1d(ConservedStateVector *U_CELL,
     ConservedStateVector UL , ConservedStateVector UR,int gridSize,double x_min,double x_max);

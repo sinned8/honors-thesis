@@ -13,12 +13,14 @@ void init_sod_grid_1d(ConservedStateVector *U_CELL,
                         int gridSize,double x_min,double x_max)
 {
     //generalized dx now based on range of x
+    //added proper indexing w/ ghost cells
     const double dx = (x_max - x_min) / gridSize;
+    const int totalSize = gridSize + 2 * NGHOST;
 
-    for (int i = 0; i < gridSize; ++i)
+    for (int i = 0; i < totalSize; ++i)
     {
-        //center for cell xi - now based on range of x
-        const double xi = x_min + (i + 0.5 ) * dx;
+        //center for cell xi - now based on range of x and ghost cells
+        const double xi = x_min + (i - NGHOST + 0.5) * dx;
 
         if (xi < 0.5)
         {
@@ -37,12 +39,14 @@ void init_shu_osher_1d(ConservedStateVector *U_CELL,
     ConservedStateVector UL , ConservedStateVector UR,int gridSize,double x_min,double x_max)
 {
     //generalized dx now based on range of x
+    //added proper indexing w/ ghost cells
     const double dx = (x_max - x_min) / gridSize;
+    const int totalSize = gridSize + 2 * NGHOST;
 
-    for (int i = 0; i < gridSize; ++i)
+    for (int i = 0; i < totalSize; ++i)
     {
-        //center for cell xi - now based on range of x
-        const double xi = x_min + (i + 0.5 ) * dx;
+        //center for cell xi - now based on range of x and ghost cells
+        const double xi = x_min + (i - NGHOST + 0.5) * dx;
 
         if (xi < -4)
         {
@@ -64,7 +68,8 @@ void compute_rhs(ConservedStateVector *U_CELL,ConservedStateVector *RHS, Physica
 
 
     compute_euler_fluxes(U_CELL, F_HAT_CELL, gridSize, gamma);
-    for (int i = 1; i <= gridSize - 2; ++i)
+    //now incorporates the ghost cells for WENO3 recon.
+    for (int i = NGHOST; i < gridSize + NGHOST; ++i)
     {
         RHS[i].rho =
             -(F_HAT_CELL[i].mass_flux
@@ -88,7 +93,7 @@ void compute_euler_fluxes(ConservedStateVector *U_CELL, PhysicalFluxVector *F_HA
 {
 
     //computes fluxes between neighboring cells
-    for (int i = 0; i < gridSize - 1; ++i)
+    for (int i = NGHOST - 1; i < gridSize + NGHOST; ++i)
     {
         F_HAT_CELL[i] = rusanov_flux(U_CELL[i],U_CELL[i+1],gamma);
     }
@@ -100,26 +105,26 @@ void update_euler_grid(ConservedStateVector *U_CELL, PhysicalFluxVector *F_HAT_C
 
 
     const double dx = (x_max - x_min) / gridSize;
+    const int totalSize = gridSize + 2 * NGHOST;
     double t = 0;
 
 
-    ConservedStateVector *U_CELL_NEW = malloc( (gridSize) * sizeof(ConservedStateVector));
-    ConservedStateVector *U_STAGE = malloc( (gridSize) * sizeof(ConservedStateVector));
-    ConservedStateVector *RHS = malloc( (gridSize) * sizeof(ConservedStateVector));
+    ConservedStateVector *U_CELL_NEW = malloc( (totalSize) * sizeof(ConservedStateVector));
+    ConservedStateVector *U_STAGE = malloc( (totalSize) * sizeof(ConservedStateVector));
+    ConservedStateVector *RHS = malloc( (totalSize) * sizeof(ConservedStateVector));
 
     // write_state_to_csv(U_CELL,gridSize,gamma,t,dx);
     while (t < t_final)
     {
-        double dt = compute_dt_CFL(U_CELL,dx,gridSize,gamma);
-
-
+        //done s.t dt only involves actual computational domain
+        double dt = compute_dt_CFL(U_CELL+NGHOST,dx,gridSize,gamma);
 
         if (t + dt > t_final)
         {
             dt = t_final -t;
         }
 
-        U_STAGE = copy_1d_array(U_CELL,U_STAGE,gridSize);
+        U_STAGE = copy_1d_array(U_CELL,U_STAGE,totalSize);
 
         //Calcing L(U^n) here
         compute_rhs(U_CELL,RHS,F_HAT_CELL,gridSize,gamma,dx);
@@ -127,7 +132,7 @@ void update_euler_grid(ConservedStateVector *U_CELL, PhysicalFluxVector *F_HAT_C
         //temp boundary treatment
         //this now uses RHS & new SSP formulation - this is first stage building
         //U^1 here
-        for (int i = 1; i <= gridSize - 2; ++i)
+        for (int i = NGHOST; i < gridSize + NGHOST; ++i)
         {
 
             U_STAGE[i].rho = U_CELL[i].rho + dt * RHS[i].rho;
@@ -138,12 +143,12 @@ void update_euler_grid(ConservedStateVector *U_CELL, PhysicalFluxVector *F_HAT_C
 
         }
 
-        U_CELL_NEW = copy_1d_array(U_CELL,U_CELL_NEW,gridSize);
+        U_CELL_NEW = copy_1d_array(U_CELL,U_CELL_NEW,totalSize);
         //RHS = L(U^(1)
         compute_rhs(U_STAGE,RHS,F_HAT_CELL,gridSize,gamma,dx);
 
         //building U^(n+1)
-        for (int i = 1; i <= gridSize - 2; ++i)
+        for (int i = NGHOST; i < gridSize + NGHOST; ++i)
         {
             U_CELL_NEW[i].rho = 0.5 * U_CELL[i].rho + 0.5 * (U_STAGE[i].rho + dt * RHS[i].rho);
 
@@ -159,8 +164,8 @@ void update_euler_grid(ConservedStateVector *U_CELL, PhysicalFluxVector *F_HAT_C
     write_state_to_csv(U_CELL,gridSize,gamma,t,dx,x_min);
     const char *output = "outputs/output.csv";
     printf("Writing to file: %s\n", output);
-    plot1d_csv_shu(output,gridSize,t_final);
-    // plot1d_csv_sod(output);
+    // plot1d_csv_shu(output,gridSize,t_final);
+    plot1d_csv_sod(output);
 
 
     free(U_CELL_NEW);
