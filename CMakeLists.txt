@@ -14,4 +14,6 @@ add_executable(Code
         array_handling.c
         array_handling.h
         io.c
-        io.h)
+        io.h
+        weno3.c
+        weno3.h)

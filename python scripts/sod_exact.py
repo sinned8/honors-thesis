@@ -70,3 +70,13 @@ def exact_sod_solution(x, t, x0=0.5, gamma=1.4):
     )
 
     return rho_exact, u_exact, p_exact
+
+#used for checking errors of WENO3
+def calculate_errors(rho_num, rho_exact, dx):
+    error = rho_num - rho_exact
+
+    L1 = dx * np.sum(np.abs(error))
+    L2 = np.sqrt(dx * np.sum(error ** 2))
+    Linf = np.max(np.abs(error))
+
+    return L1, L2, Linf

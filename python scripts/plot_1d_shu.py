@@ -2,6 +2,7 @@ import pandas as pd
 import sys
 import matplotlib.pyplot as plt
 import numpy as np
+from scipy.io import loadmat
 
 
 
@@ -28,9 +29,10 @@ fig, axes = plt.subplots(
     sharex=True
 )
 
-axes[0].plot(x, rho, linewidth=1.2)
+axes[0].plot(x, rho, linewidth=1.2 , label="WENO3 + SSP-RK2 + Rusanov")
 axes[0].set_ylabel("Density")
 axes[0].grid(alpha=0.25)
+axes[0].legend(loc="upper right")
 
 axes[1].plot(x, velocity, linewidth=1.2)
 axes[1].set_ylabel("Velocity")
@@ -44,7 +46,6 @@ axes[2].grid(alpha=0.25)
 axes[2].set_xlim(-5, 5)
 
 fig.suptitle(f"Shu–Osher Problem — N = {N}, t = {T_FINAL}")
-
 plt.tight_layout()
 plt.show()
 
@@ -58,7 +59,7 @@ plt.plot(
     x,
     rho,
     linewidth=1.3,
-    label="Rusanov"
+    label="WENO3 + SSP-RK2 + Rusanov"
 )
 
 plt.xlabel("x")
@@ -71,3 +72,9 @@ plt.legend()
 
 plt.tight_layout()
 plt.show()
+
+
+
+
+
+

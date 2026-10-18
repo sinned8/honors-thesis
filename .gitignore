@@ -23,3 +23,6 @@ __pycache__/
 
 # Third-party repositories
 external/riemann_book/
+
+# External numerical reference data
+external/*.mat

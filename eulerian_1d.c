@@ -1,6 +1,7 @@
 #include "shared_euler.h"
 #include "eulerian_1d.h"
 #include "array_handling.h"
+#include "weno3.h"
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -86,16 +87,63 @@ void compute_rhs(ConservedStateVector *U_CELL,ConservedStateVector *RHS, Physica
 
 }
 
+//checking for valid states - uses ideal-gas pressure relationship for pressure
+//returns zero if either the density or pressure < 0 returns 1 otherwise
+static int valid_state(ConservedStateVector U, double gamma)
+{
+    if (!isfinite(U.rho) || !isfinite(U.momentum) ||
+        !isfinite(U.energy) || U.rho <= 0.0)
+    {
+        return 0;
+    }
+
+    double pressure = (gamma - 1.0) *
+        (U.energy - 0.5 * U.momentum * U.momentum / U.rho);
+
+    if (!isfinite(pressure) || pressure <= 0.0)
+    {
+        return 0;
+    }
+
+    return 1;
+}
+
 
 
 void compute_euler_fluxes(ConservedStateVector *U_CELL, PhysicalFluxVector *F_HAT_CELL,
     int gridSize, double gamma)
 {
+    const int totalSize = gridSize + 2 * NGHOST;
+
 
     //computes fluxes between neighboring cells
     for (int i = NGHOST - 1; i < gridSize + NGHOST; ++i)
     {
-        F_HAT_CELL[i] = rusanov_flux(U_CELL[i],U_CELL[i+1],gamma);
+        ConservedStateVector UL;
+        ConservedStateVector UR;
+        //component wise
+        UL.rho = weno3_left(U_CELL[i-1].rho,U_CELL[i].rho,U_CELL[i+1].rho);
+        UR.rho = weno3_right(U_CELL[i].rho,U_CELL[i+1].rho,U_CELL[i+2].rho);
+
+        UL.momentum = weno3_left(U_CELL[i-1].momentum,U_CELL[i].momentum,U_CELL[i+1].momentum);
+        UR.momentum = weno3_right(U_CELL[i].momentum,U_CELL[i+1].momentum,U_CELL[i+2].momentum);
+
+        UL.energy = weno3_left(U_CELL[i-1].energy,U_CELL[i].energy,U_CELL[i+1].energy);
+        UR.energy = weno3_right(U_CELL[i].energy,U_CELL[i+1].energy,U_CELL[i+2].energy);
+
+        //checking for valid states here - if density or pressure is < 0
+        // our speed of sound func will incur some problems :(
+        if (!valid_state(UL, gamma))
+        {
+            UL = U_CELL[i];
+        }
+        if (!valid_state(UR, gamma))
+        {
+            UR = U_CELL[i + 1];
+        }
+
+
+        F_HAT_CELL[i] = rusanov_flux(UL,UR,gamma);
     }
 }
 
@@ -157,15 +205,15 @@ void update_euler_grid(ConservedStateVector *U_CELL, PhysicalFluxVector *F_HAT_C
             U_CELL_NEW[i].energy = 0.5 * U_CELL[i].energy + 0.5 * (U_STAGE[i].energy + dt * RHS[i].energy);
         }
 
-        U_CELL = copy_1d_array(U_CELL_NEW,U_CELL,gridSize);
+        U_CELL = copy_1d_array(U_CELL_NEW,U_CELL,totalSize);
         t += dt;
 
     }
-    write_state_to_csv(U_CELL,gridSize,gamma,t,dx,x_min);
+    write_state_to_csv(U_CELL + NGHOST,gridSize,gamma,t,dx,x_min);
     const char *output = "outputs/output.csv";
     printf("Writing to file: %s\n", output);
-    // plot1d_csv_shu(output,gridSize,t_final);
-    plot1d_csv_sod(output);
+    plot1d_csv_shu(output,gridSize,t_final);
+    // plot1d_csv_sod(output);
 
 
     free(U_CELL_NEW);
