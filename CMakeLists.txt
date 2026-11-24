@@ -16,4 +16,6 @@ add_executable(Code
         io.c
         io.h
         weno3.c
-        weno3.h)
+        weno3.h
+        lagrangian_1d.c
+        lagrangian_1d.h)

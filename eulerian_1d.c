@@ -5,7 +5,6 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
-
 #include "io.h"
 
 
@@ -63,6 +62,56 @@ void init_shu_osher_1d(ConservedStateVector *U_CELL,
     }
 }
 
+//initializing the smooth test case from Kadioglu,Sussman et al. section 4.1.8
+// https://www.sciencedirect.com/science/article/pii/S0021999105001798
+void init_smoothtest_1d (ConservedStateVector *U_CELL,int gridSize,double x_min,
+    double x_max,double gamma)
+{
+    const double dx = (x_max - x_min) / gridSize;
+    const int totalSize = gridSize + 2 * NGHOST;
+
+
+    const double pi = acos(-1.0);
+    const double p0 = 1.0e6;
+    const double rho0 = 1.0e-3;
+    const double epsilon = 1.0;
+
+    for (int i = NGHOST; i < gridSize + NGHOST; ++i)
+    {
+        //center of each physical cell
+        const double xi = x_min + (i - NGHOST + 0.5) * dx;
+
+        //smooth pressure perturbation
+        const double p1 = 60.0*cos(2.0*pi*xi)
+                        + 100.0*sin(4.0*pi*xi);
+
+        const double p = p0 + epsilon*p1;
+
+        //isentropic density relation
+        const double rho = rho0 * pow(p / p0, 1.0/gamma);
+
+        PrimitiveStateVector W = {rho, 0.0, p};
+        U_CELL[i] = prim_to_conserved(W, gamma);
+    }
+}
+
+//periodic BC for smooth test
+void apply_periodic_ghosts(ConservedStateVector *U_CELL,
+                                 int gridSize)
+{
+    for (int i = 0; i < NGHOST; ++i)
+    {
+        //left ghosts copy the last physical cells
+        U_CELL[i] = U_CELL[gridSize + i];
+
+        //right ghosts copy the first physical cells
+        U_CELL[gridSize + NGHOST + i] =
+            U_CELL[NGHOST + i];
+    }
+}
+
+
+
 //part of SSP-RK2 - just the LUi part
 void compute_rhs(ConservedStateVector *U_CELL,ConservedStateVector *RHS, PhysicalFluxVector *F_HAT_CELL,int gridSize,double gamma,double dx)
 {
@@ -113,7 +162,7 @@ static int valid_state(ConservedStateVector U, double gamma)
 void compute_euler_fluxes(ConservedStateVector *U_CELL, PhysicalFluxVector *F_HAT_CELL,
     int gridSize, double gamma)
 {
-    const int totalSize = gridSize + 2 * NGHOST;
+   
 
 
     //computes fluxes between neighboring cells
@@ -148,7 +197,7 @@ void compute_euler_fluxes(ConservedStateVector *U_CELL, PhysicalFluxVector *F_HA
 }
 
 void update_euler_grid(ConservedStateVector *U_CELL, PhysicalFluxVector *F_HAT_CELL,
-    int gridSize, double gamma, double t_final, double x_min,double x_max)
+    int gridSize, double gamma, double t_final, double x_min,double x_max,bool periodic)
 {
 
 
@@ -162,8 +211,13 @@ void update_euler_grid(ConservedStateVector *U_CELL, PhysicalFluxVector *F_HAT_C
     ConservedStateVector *RHS = malloc( (totalSize) * sizeof(ConservedStateVector));
 
     // write_state_to_csv(U_CELL,gridSize,gamma,t,dx);
+    int stepCount  = 0;
     while (t < t_final)
     {
+        if (periodic)
+        {
+            apply_periodic_ghosts(U_CELL,gridSize);
+        }
         //done s.t dt only involves actual computational domain
         double dt = compute_dt_CFL(U_CELL+NGHOST,dx,gridSize,gamma);
 
@@ -192,6 +246,11 @@ void update_euler_grid(ConservedStateVector *U_CELL, PhysicalFluxVector *F_HAT_C
         }
 
         U_CELL_NEW = copy_1d_array(U_CELL,U_CELL_NEW,totalSize);
+        if (periodic)
+        {
+            apply_periodic_ghosts(U_STAGE,gridSize);
+        }
+
         //RHS = L(U^(1)
         compute_rhs(U_STAGE,RHS,F_HAT_CELL,gridSize,gamma,dx);
 
@@ -207,14 +266,16 @@ void update_euler_grid(ConservedStateVector *U_CELL, PhysicalFluxVector *F_HAT_C
 
         U_CELL = copy_1d_array(U_CELL_NEW,U_CELL,totalSize);
         t += dt;
+        stepCount++;
 
     }
     write_state_to_csv(U_CELL + NGHOST,gridSize,gamma,t,dx,x_min);
     const char *output = "outputs/output.csv";
     printf("Writing to file: %s\n", output);
-    plot1d_csv_shu(output,gridSize,t_final);
-    // plot1d_csv_sod(output);
-
+    // plot1d_csv_shu(output,gridSize,t_final);
+    plot1d_csv_sod(output);
+    // printf("N = %d, Timesteps = %d, Final time = %.15e\n",
+    //    gridSize, stepCount, t);
 
     free(U_CELL_NEW);
     free(U_STAGE);

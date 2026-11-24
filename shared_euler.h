@@ -23,6 +23,13 @@ typedef struct {
     double energy_flux;
 } PhysicalFluxVector;
 
+typedef struct
+{
+    double pos;
+    ConservedStateVector U;
+    double volume;
+} ParticleStruct;
+
 
 ConservedStateVector prim_to_conserved( PrimitiveStateVector w,double gamma);
 PrimitiveStateVector conserved_to_prim( ConservedStateVector u, double gamma);

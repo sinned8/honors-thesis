@@ -8,19 +8,22 @@ void init_sod_grid_1d(ConservedStateVector *U_CELL,
 void init_shu_osher_1d(ConservedStateVector *U_CELL,
     ConservedStateVector UL , ConservedStateVector UR,int gridSize,double x_min,double x_max);
 
+void init_smoothtest_1d(ConservedStateVector *U_CELL,
+    int gridSize,double x_min,double x_max,double gamma);
 
 void compute_euler_fluxes(ConservedStateVector *U_CELL, PhysicalFluxVector *F_HAT_CELL,
     int gridSize, double gamma);
 
 void update_euler_grid(ConservedStateVector *U_CELL, PhysicalFluxVector *F_HAT_CELL,
-    int gridSize,double gamma,double t_final, double x_min,double x_max);
+    int gridSize,double gamma,double t_final, double x_min,double x_max,bool periodic);
 
 double compute_dt_CFL(ConservedStateVector *U_CELL,double dx, int gridSize,double gamma);
 
 void compute_rhs(ConservedStateVector *U_CELL,ConservedStateVector *RHS,
     PhysicalFluxVector *F_HAT_CELL,int gridSize,double gamma,double dx);
 
-
+void apply_periodic_ghosts(ConservedStateVector *U_CELL,
+                                 int gridSize);
 
 #endif
 
